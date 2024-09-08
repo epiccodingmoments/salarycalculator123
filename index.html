@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic Calendar for Salary Calculation</title>
+    <title>Salary Calculation Calendar</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -39,7 +39,7 @@
         }
         th, td {
             padding: 10px;
-            font-size: 24px;
+            font-size: 14px;
             width: 75px;
         }
         th {
@@ -54,12 +54,12 @@
         }
         label {
             cursor: pointer;
-            font-size: 24px;
+            font-size: 14px;
         }
         .summary {
             text-align: center;
             margin-top: 20px;
-            font-size: 24px;
+            font-size: 20px;
         }
         .summary h2 {
             margin: 5px 0;
@@ -98,13 +98,7 @@
 
     </style>
     <script>
-        let totalDaysWorked = 0;
-        let totalHoursWorked = 0;
-        let basicSalary = 0;
-        let addition = 0;
-        let totalSalary = 0;
-        let dayValues = {};
-        let daysInMonth = 31;
+        const daysInMonth = 31;
 
         // Function to limit only 2 checkboxes per day
         function limitCheckboxes(day) {
@@ -157,12 +151,11 @@
             const salaryPerHour = parseFloat(document.getElementById('salaryPerHour').value);
             const startDay = parseInt(document.getElementById('startDay').value);
 
-            totalDaysWorked = 0;
-            totalHoursWorked = 0;
-            basicSalary = 0;
-            addition = 0;
-            totalSalary = 0;
-            dayValues = {};
+            let totalDaysWorked = 0;
+            let totalHoursWorked = 0;
+            let basicSalary = 0;
+            let addition = 0;
+            let totalSalary = 0;
 
             for (let day = 1; day <= daysInMonth; day++) {
                 let dayWorked = false;
@@ -195,11 +188,10 @@
                 // Calculate additions and total salary
                 addition += dayValue - dayBasic;
                 basicSalary += dayBasic;
-                dayValues[day] = dayValue;
             }
 
             totalSalary = basicSalary + addition;
-            displaySummary();
+            displaySummary(totalHoursWorked, totalDaysWorked, basicSalary, addition, totalSalary);
         }
 
         // Function to get shift details (hours and multiplier)
@@ -230,9 +222,9 @@
         }
 
         // Display salary summary
-        function displaySummary() {
-            document.getElementById('hoursWorked').innerText = totalHoursWorked;
-            document.getElementById('daysWorked').innerText = totalDaysWorked;
+        function displaySummary(hoursWorked, daysWorked, basicSalary, addition, totalSalary) {
+            document.getElementById('hoursWorked').innerText = hoursWorked;
+            document.getElementById('daysWorked').innerText = daysWorked;
             document.getElementById('basicSalary').innerText = `₪${basicSalary.toFixed(2)}`;
             document.getElementById('addition').innerText = `₪${addition.toFixed(2)}`;
             document.getElementById('totalSalary').innerText = `₪${totalSalary.toFixed(2)}`;
