@@ -104,6 +104,7 @@
         let addition = 0;
         let totalSalary = 0;
         let dayValues = {};
+        let daysInMonth = 31;
 
         // Function to limit only 2 checkboxes per day
         function limitCheckboxes(day) {
@@ -117,12 +118,45 @@
             });
         }
 
+        // Function to generate the calendar dynamically based on the start day
+        function generateCalendar() {
+            const calendarBody = document.getElementById("calendarBody");
+            const startDay = parseInt(document.getElementById('startDay').value);
+            calendarBody.innerHTML = ""; // Clear the current calendar
+
+            let currentDay = 1;
+            for (let week = 0; week < 6; week++) {
+                let row = document.createElement("tr");
+
+                for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
+                    let cell = document.createElement("td");
+
+                    if (week === 0 && dayOfWeek < startDay) {
+                        cell.classList.add("empty");
+                    } else if (currentDay <= daysInMonth) {
+                        cell.innerHTML = `
+                            <strong>${currentDay}</strong><br>
+                            <label><input type='checkbox' name='selectedOptions[${currentDay}][morning]' onclick='limitCheckboxes(${currentDay})'> Morning</label><br>
+                            <label><input type='checkbox' name='selectedOptions[${currentDay}][evening]' onclick='limitCheckboxes(${currentDay})'> Evening</label><br>
+                            <label><input type='checkbox' name='selectedOptions[${currentDay}][night]' onclick='limitCheckboxes(${currentDay})'> Night</label>
+                        `;
+                        currentDay++;
+                    } else {
+                        cell.classList.add("empty");
+                    }
+
+                    row.appendChild(cell);
+                }
+
+                calendarBody.appendChild(row);
+            }
+        }
+
         // Function to calculate the salary for selected shifts
         function calculateSalary() {
             const salaryPerHour = parseFloat(document.getElementById('salaryPerHour').value);
             const startDay = parseInt(document.getElementById('startDay').value);
-            const daysInMonth = 31;
-            let currentDay = 1;
+
             totalDaysWorked = 0;
             totalHoursWorked = 0;
             basicSalary = 0;
@@ -203,6 +237,11 @@
             document.getElementById('addition').innerText = `₪${addition.toFixed(2)}`;
             document.getElementById('totalSalary').innerText = `₪${totalSalary.toFixed(2)}`;
         }
+
+        // Initialize the page with the default calendar
+        window.onload = function() {
+            generateCalendar();
+        };
     </script>
 </head>
 <body>
@@ -211,7 +250,7 @@
     
     <form>
         <label for="startDay">Select the Starting Day of the Month:</label>
-        <select id="startDay" name="startDay">
+        <select id="startDay" name="startDay" onchange="generateCalendar()">
             <option value="0">Sunday</option>
             <option value="1">Monday</option>
             <option value="2">Tuesday</option>
@@ -238,31 +277,8 @@
                     <th>SAT</th>
                 </tr>
             </thead>
-            <tbody>
-                <script>
-                    // Generate the calendar dynamically
-                    let daysInMonth = 31;
-                    let startDay = 0;
-                    for (let week = 0; week < 6; week++) {
-                        document.write('<tr>');
-                        for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
-                            let currentDay = week * 7 + dayOfWeek + 1 - startDay;
-                            if (currentDay <= 0 || currentDay > daysInMonth) {
-                                document.write("<td class='empty'></td>");
-                            } else {
-                                document.write(`
-                                    <td>
-                                        <strong>${currentDay}</strong><br>
-                                        <label><input type='checkbox' name='selectedOptions[${currentDay}][morning]' onclick='limitCheckboxes(${currentDay})'> Morning</label><br>
-                                        <label><input type='checkbox' name='selectedOptions[${currentDay}][evening]' onclick='limitCheckboxes(${currentDay})'> Evening</label><br>
-                                        <label><input type='checkbox' name='selectedOptions[${currentDay}][night]' onclick='limitCheckboxes(${currentDay})'> Night</label>
-                                    </td>
-                                `);
-                            }
-                        }
-                        document.write('</tr>');
-                    }
-                </script>
+            <tbody id="calendarBody">
+                <!-- Calendar will be dynamically generated here -->
             </tbody>
         </table>
 
