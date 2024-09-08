@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Calendar for Salary Calculation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        h2 {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 24px;
+        }
+        form {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        input[type="number"], input[type="submit"], select {
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 16px;
+            width: 100%;
+            max-width: 300px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            text-align: center;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 10px;
+            font-size: 24px;
+            width: 75px;
+        }
+        th {
+            background-color: #34495e;
+            color: white;
+        }
+        .empty {
+            background-color: #ecf0f1;
+        }
+        input[type="checkbox"] {
+            margin: 5px;
+        }
+        label {
+            cursor: pointer;
+            font-size: 24px;
+        }
+        .summary {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 24px;
+        }
+        .summary h2 {
+            margin: 5px 0;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            table, th, td {
+                font-size: 10px;
+            }
+            th, td {
+                padding: 8px;
+                width: auto;
+            }
+        }
+
+        @media (max-width: 600px) {
+            table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+
+            th, td {
+                display: inline-block;
+                padding: 6px;
+                width: 75px;
+            }
+
+            input[type="number"], input[type="submit"], select {
+                width: 90%;
+                max-width: 100%;
+                font-size: 14px;
+            }
+        }
+
+    </style>
+    <script>
+        let totalDaysWorked = 0;
+        let totalHoursWorked = 0;
+        let basicSalary = 0;
+        let addition = 0;
+        let totalSalary = 0;
+        let dayValues = {};
+
+        // Function to limit only 2 checkboxes per day
+        function limitCheckboxes(day) {
+            const checkboxes = document.querySelectorAll(`input[name^="selectedOptions[${day}]"]`);
+            let checkedCount = 0;
+            checkboxes.forEach(box => {
+                if (box.checked) checkedCount++;
+            });
+            checkboxes.forEach(box => {
+                if (!box.checked) box.disabled = (checkedCount >= 2);
+            });
+        }
+
+        // Function to calculate the salary for selected shifts
+        function calculateSalary() {
+            const salaryPerHour = parseFloat(document.getElementById('salaryPerHour').value);
+            const startDay = parseInt(document.getElementById('startDay').value);
+            const daysInMonth = 31;
+            let currentDay = 1;
+            totalDaysWorked = 0;
+            totalHoursWorked = 0;
+            basicSalary = 0;
+            addition = 0;
+            totalSalary = 0;
+            dayValues = {};
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                let dayWorked = false;
+                let dayValue = 0;
+                let dayBasic = 0;
+                const dayOfWeek = (day + startDay - 1) % 7;
+
+                const shifts = {
+                    morning: document.querySelector(`input[name="selectedOptions[${day}][morning]"]`).checked,
+                    evening: document.querySelector(`input[name="selectedOptions[${day}][evening]"]`).checked,
+                    night: document.querySelector(`input[name="selectedOptions[${day}][night]"]`).checked,
+                };
+
+                // Determine hours and multipliers based on the day and shift
+                for (const [shift, selected] of Object.entries(shifts)) {
+                    if (selected) {
+                        const [shiftHours, shiftMultiplier] = getShiftDetails(shift, dayOfWeek);
+                        const shiftSalary = shiftHours * salaryPerHour * shiftMultiplier;
+
+                        dayValue += shiftSalary;
+                        dayBasic += shiftHours * salaryPerHour;
+                        totalHoursWorked += shiftHours;
+                        if (!dayWorked) {
+                            totalDaysWorked++;
+                            dayWorked = true;
+                        }
+                    }
+                }
+
+                // Calculate additions and total salary
+                addition += dayValue - dayBasic;
+                basicSalary += dayBasic;
+                dayValues[day] = dayValue;
+            }
+
+            totalSalary = basicSalary + addition;
+            displaySummary();
+        }
+
+        // Function to get shift details (hours and multiplier)
+        function getShiftDetails(shift, dayOfWeek) {
+            let shiftHours = 0;
+            let shiftMultiplier = 1;
+
+            if (dayOfWeek >= 0 && dayOfWeek <= 4) {  // Sunday to Thursday
+                switch (shift) {
+                    case 'morning': return [8, 1];
+                    case 'evening': return [8.5, 1.2];
+                    case 'night': return [9, 1.5];
+                }
+            } else if (dayOfWeek === 5) {  // Friday
+                switch (shift) {
+                    case 'morning': return [8, 1.4];
+                    case 'evening': return [8.5, 1.4];
+                    case 'night': return [9, 2];
+                }
+            } else if (dayOfWeek === 6) {  // Saturday
+                switch (shift) {
+                    case 'morning': return [8, 1.75];
+                    case 'evening': return [8.5, 1.75];
+                    case 'night': return [9, 2];
+                }
+            }
+            return [shiftHours, shiftMultiplier];
+        }
+
+        // Display salary summary
+        function displaySummary() {
+            document.getElementById('hoursWorked').innerText = totalHoursWorked;
+            document.getElementById('daysWorked').innerText = totalDaysWorked;
+            document.getElementById('basicSalary').innerText = `₪${basicSalary.toFixed(2)}`;
+            document.getElementById('addition').innerText = `₪${addition.toFixed(2)}`;
+            document.getElementById('totalSalary').innerText = `₪${totalSalary.toFixed(2)}`;
+        }
+    </script>
+</head>
+<body>
+
+    <h2>Dynamic Calendar for Salary Calculation</h2>
+    
+    <form>
+        <label for="startDay">Select the Starting Day of the Month:</label>
+        <select id="startDay" name="startDay">
+            <option value="0">Sunday</option>
+            <option value="1">Monday</option>
+            <option value="2">Tuesday</option>
+            <option value="3">Wednesday</option>
+            <option value="4">Thursday</option>
+            <option value="5">Friday</option>
+            <option value="6">Saturday</option>
+        </select>
+        <br><br>
+        
+        <label for="salaryPerHour">Salary per Hour (₪):</label>
+        <input type="number" id="salaryPerHour" name="salaryPerHour" step="0.01" min="0" placeholder="Enter your hourly rate">
+        <br><br>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>SUN</th>
+                    <th>MON</th>
+                    <th>TUE</th>
+                    <th>WED</th>
+                    <th>THU</th>
+                    <th>FRI</th>
+                    <th>SAT</th>
+                </tr>
+            </thead>
+            <tbody>
+                <script>
+                    // Generate the calendar dynamically
+                    let daysInMonth = 31;
+                    let startDay = 0;
+                    for (let week = 0; week < 6; week++) {
+                        document.write('<tr>');
+                        for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
+                            let currentDay = week * 7 + dayOfWeek + 1 - startDay;
+                            if (currentDay <= 0 || currentDay > daysInMonth) {
+                                document.write("<td class='empty'></td>");
+                            } else {
+                                document.write(`
+                                    <td>
+                                        <strong>${currentDay}</strong><br>
+                                        <label><input type='checkbox' name='selectedOptions[${currentDay}][morning]' onclick='limitCheckboxes(${currentDay})'> Morning</label><br>
+                                        <label><input type='checkbox' name='selectedOptions[${currentDay}][evening]' onclick='limitCheckboxes(${currentDay})'> Evening</label><br>
+                                        <label><input type='checkbox' name='selectedOptions[${currentDay}][night]' onclick='limitCheckboxes(${currentDay})'> Night</label>
+                                    </td>
+                                `);
+                            }
+                        }
+                        document.write('</tr>');
+                    }
+                </script>
+            </tbody>
+        </table>
+
+        <input type="button" value="Calculate Salary" onclick="calculateSalary()">
+    </form>
+
+    <div class="summary">
+        <h2>Hours Worked: <span id="hoursWorked">0</span></h2>
+        <h2>Days Worked: <span id="daysWorked">0</span></h2>
+        <h2>Basic Salary: <span id="basicSalary">₪0.00</span></h2>
+        <h2>Addition (Overtime/Bonuses): <span id="addition">₪0.00</span></h2>
+        <h2>Total Salary: <span id="totalSalary">₪0.00</span></h2>
+    </div>
+
+</body>
+</html>
